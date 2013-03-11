@@ -1,8 +1,17 @@
 #encoding: utf-8
 
 require_relative './entity'
+require_relative './html_parser'
 
 class AuctionParser
+	attr_reader :doc
+	attr_reader :list
+
+	def initialize(url)
+		@doc = HTMLParser.get_doc url
+		@list = AuctionParser.create_list @doc
+	end
+
 	class << self
 		public
 		def create_list(doc)
@@ -22,14 +31,51 @@ class AuctionParser
 		def page_num(doc)
 
 		end
+		
+		# TODO: modify
+		def has_next_page?
+			footer = @doc.css("#list01").parent.children.last
+			td = footer.xpath(".//td").select{|td| td["align"] == "right"}.first
+			as = td.xpath(".//a")
+			
+			if as.length == 2
+				return true
+			end
+			
+			if as.length == 1 && as.first.text =~ /次の50件/
+				return true
+			end
+			
+			return false
+			
+			
+=begin
+			tables = @doc.css("#list01").xpath(".//table")
+			return false if tables.empty?
+
+			tables.select do |t|
+				tds = t.xpath(".//td")
+				if tds.length == 2 && tds.any?{|td| td.key?("align") && td["align"] == "right"}
+					tds.last.xpath(".//a").first.text =~ /(前|次)の50件/
+				else
+					false
+				end
+			end.length == 1
+=end
+		end
 
 		private
+		# HTMLDocument から list01 を探索して，データが詰まった行をすべて抜き出す
 		def get_list(doc)
-			l = doc.css("#list01").xpath(".//table").last.xpath(".//tr")
-			.select{|e| e.xpath(".//td").count > 1} 
-			l.shift
+			list = doc.css("#list01")
+			if list.empty?
+				return []
+			end
+			
+			elements = list.xpath(".//table").last.xpath(".//tr").select{|e| e.xpath(".//td").count > 1} 
+			elements.shift
 
-			return l
+			return elements
 		end
 
 		def get_name(td)
