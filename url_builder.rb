@@ -37,6 +37,8 @@ class URLBuilder
 	end
 
 	def build_url
+		raise "Search words not specified" unless @search_words
+		
 		search_words_str = @search_words.map{|e| URI.encode e.encode("EUC-JP")}.join("+")
 		param_str = build_params_str(@params)
 		return BASE_URL + "closedsearch?p=#{search_words_str}#{param_str}"

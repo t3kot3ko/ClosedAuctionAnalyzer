@@ -9,16 +9,18 @@ class SampleClient < AbstractClient
 
 	def initialize(*search_param)
 		@builder = URLBuilder.new
+		@page = 1
+		
 		self.set_params(
 			{
-				page: 1,
+				page: @page,
 				order: :desc,
 				sort: :end_price
 			}
 		)
 		self.set_search_words(*search_param)
 		
-		fetch_data
+		update
 	end
 
 	def set_params(params)
@@ -29,18 +31,21 @@ class SampleClient < AbstractClient
 		@builder.set_search_words(*search_words)
 	end
 
-	def fetch_data
+	def update
 		url = @builder.build_url
 		@doc = HTMLParser.get_doc url
 		@list = AuctionParser.create_list @doc
 	end
 
-	def get_avr
-		return @list.map(&:end_price).inject(0, &:+).to_f / @list.length
+	def append
+		url = @builder.build_url
+		@doc = HTMLParser.get_doc url
+		@list += AuctionParser.create_list @doc
 	end
 
-	def append_next_page
-		
+
+	def get_avr
+		return @list.map(&:end_price).inject(0, &:+).to_f / @list.length
 	end
 
 	def dump
@@ -61,6 +66,12 @@ class SampleClient < AbstractClient
 				false
 			end
 		end.length == 1
+	end
+
+	def append_next_page
+		@page += 1
+		self.set_params(page: @page)
+		self.append
 	end
 end
 
