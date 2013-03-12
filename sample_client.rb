@@ -28,11 +28,13 @@ class SampleClient < AbstractClient
 	end
 
 	def set_search_words(*search_words)
+		@builder.set_params(page: 1)
 		@builder.set_search_words(*search_words)
 	end
 
 	def update
 		url = @builder.build_url
+		puts url
 		@doc = HTMLParser.get_doc url
 		@list = AuctionParser.create_list @doc
 	end
